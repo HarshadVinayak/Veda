@@ -58,6 +58,15 @@ export async function middleware(request: NextRequest) {
 
   // If logged in, check if user has a username
   if (user) {
+    // Step 20: Root User Bypass
+    const isRoot = user.email === 'harish.ramamoorthy7@gmail.com';
+    const isOnboarding = request.nextUrl.pathname.startsWith("/onboarding");
+
+    if (isRoot) {
+      if (isOnboarding) return NextResponse.redirect(new URL("/dashboard", request.url));
+      return response;
+    }
+
     const { data: profile } = await supabase
       .from("profiles")
       .select("username")
@@ -65,7 +74,6 @@ export async function middleware(request: NextRequest) {
       .single();
 
     const isMissingUsername = !profile?.username;
-    const isOnboarding = request.nextUrl.pathname.startsWith("/onboarding");
 
     // 1. Redirect to onboarding if username is missing
     if (isMissingUsername && !isOnboarding && request.nextUrl.pathname !== "/login") {
@@ -81,15 +89,23 @@ export async function middleware(request: NextRequest) {
   }
 
   // Protect routes
-  const isProtectedPath = 
-    request.nextUrl.pathname.startsWith("/dashboard") || 
-    request.nextUrl.pathname.startsWith("/reader") ||
-    request.nextUrl.pathname.startsWith("/admin");
+  const isDashboardPath = request.nextUrl.pathname.startsWith("/dashboard");
+  const isReaderPath = request.nextUrl.pathname.startsWith("/reader");
+  const isAdminPath = request.nextUrl.pathname.startsWith("/admin");
 
-  if (isProtectedPath && !user) {
+  // 1. Must be logged in for any protected path
+  if ((isDashboardPath || isReaderPath || isAdminPath) && !user) {
     const url = request.nextUrl.clone();
     url.pathname = "/login";
     return NextResponse.redirect(url);
+  }
+
+  // 2. Must be ROOT_USER for admin path
+  if (isAdminPath && user) {
+     const isRoot = user.email === 'harish.ramamoorthy7@gmail.com';
+     if (!isRoot) {
+       return NextResponse.redirect(new URL("/dashboard", request.url));
+     }
   }
 
   if (request.nextUrl.pathname === "/login" && user) {
@@ -104,3 +120,6 @@ export const config = {
     "/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)",
   ],
 };
+
+const vedaMiddleware = { middleware };
+export default vedaMiddleware;

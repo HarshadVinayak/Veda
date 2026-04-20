@@ -56,8 +56,8 @@ export default function OnboardingPage() {
         .update({
           username: username.trim(),
           avatar_url: (user.user_metadata?.avatar_url as string | null) || null,
-          tier: currentProfile?.tier || "FREE_LISTENER" as UserTier,
-        })
+          tier: (currentProfile?.tier || "FREE_LISTENER") as UserTier,
+        } as any)
         .eq("id", user.id);
 
       if (profileError) throw profileError;

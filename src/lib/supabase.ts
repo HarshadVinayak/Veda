@@ -1,17 +1,42 @@
-import { createClient } from '@supabase/supabase-js';
-import { Database } from '@/types/database';
+import { createClient } from "@supabase/supabase-js";
+import { Database } from "@/types/database";
 
-// ──────────────────────────────────────────────
-// Browser (client‑side) Supabase client
-// Use this in "use client" components.
-// ──────────────────────────────────────────────
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
+const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
 
-const supabaseUrl =
-  process.env.NEXT_PUBLIC_SUPABASE_URL ||
-  'https://rnvetgwxmbjythdgbzbn.supabase.co';
-
-const supabaseAnonKey =
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ||
-  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJudmV0Z3d4bWJqeXRoZGdiemJuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY1MTgwMjQsImV4cCI6MjA5MjA5NDAyNH0.4_fYNkAoCzgfIh19JmXW5P-eHBekqNCwCeh-5m9sgKE';
-
+/**
+ * Standard Client-side Supabase instance.
+ * Exported as default for Turbopack compatibility.
+ */
 export const supabase = createClient<Database>(supabaseUrl, supabaseAnonKey);
+
+/**
+ * Root User Check Utility
+ * Used to verify if a user is the platform owner.
+ */
+export function isRootUser(email?: string): boolean {
+  if (!email) return false;
+  return email.toLowerCase() === "harish.ramamoorthy7@gmail.com";
+}
+
+/**
+ * Helper to determine user tier permissions
+ */
+export async function getUserRole(userId: string) {
+  const { data, error } = await supabase
+    .from("profiles")
+    .select("tier")
+    .eq("id", userId)
+    .single();
+
+  if (error || !data) return "FREE_LISTENER";
+  return data.tier;
+}
+
+const supabaseLib = {
+  supabase,
+  isRootUser,
+  getUserRole,
+};
+
+export default supabaseLib;
