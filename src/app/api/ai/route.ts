@@ -6,7 +6,7 @@ import { cookies } from 'next/headers';
 
 export const runtime = 'edge';
 
-export async function POST(req: NextRequest): Promise<Response> {
+export async function POST(req: NextRequest) {
   try {
     const { prompt, context, taskType, tier: requestedTier } = await req.json();
 

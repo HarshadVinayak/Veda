@@ -4,7 +4,7 @@ import { UserTier } from '@/types/database';
 
 export const runtime = 'edge';
 
-export async function POST(req: NextRequest): Promise<Response> {
+export async function POST(req: NextRequest) {
   try {
     const { contextText, userQuery, tier = 'FREE' } = await req.json();
 
