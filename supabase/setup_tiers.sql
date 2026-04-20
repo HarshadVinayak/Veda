@@ -20,9 +20,11 @@ CREATE TABLE IF NOT EXISTS public.profiles (
 ALTER TABLE public.profiles ENABLE ROW LEVEL SECURITY;
 
 -- 4. Create Policies
+DROP POLICY IF EXISTS "Profiles are viewable by self" ON public.profiles;
 CREATE POLICY "Profiles are viewable by self" ON public.profiles
   FOR SELECT USING (auth.uid() = id);
 
+DROP POLICY IF EXISTS "Users can update own profile" ON public.profiles;
 CREATE POLICY "Users can update own profile" ON public.profiles
   FOR UPDATE USING (auth.uid() = id);
 
