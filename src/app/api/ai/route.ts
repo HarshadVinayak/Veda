@@ -6,7 +6,7 @@ import { cookies } from 'next/headers';
 
 export const runtime = 'edge';
 
-export async function POST(req: NextRequest) {
+export async function POST(req: NextRequest): Promise<Response> {
   try {
     const { prompt, context, taskType, tier: requestedTier } = await req.json();
 
@@ -14,7 +14,7 @@ export async function POST(req: NextRequest) {
     // Step 8: Auth & Tier Verification
     // ──────────────────────────────────────────────
     const DEMO_MODE = process.env.DEMO_MODE !== 'false';
-    let userTier: UserTier = requestedTier || 'FREE';
+    let userTier: UserTier = requestedTier || 'FREE_LISTENER';
 
     if (!DEMO_MODE) {
       const cookieStore = await cookies();
@@ -35,17 +35,17 @@ export async function POST(req: NextRequest) {
       if (profile) userTier = profile.tier as UserTier;
     }
 
-    // ──────────────────────────────────────────────
-    // Step 8: Waterfall AI Execution
-    // ──────────────────────────────────────────────
     const result = await getAiWaterfall(userTier, context || '', prompt);
 
-    // If result is from streamText, it will have toTextStreamResponse
-    if (typeof result !== 'string' && 'toTextStreamResponse' in (result as any)) {
-      return (result as any).toTextStreamResponse() as Response;
+    if (result && typeof result === 'object' && 'toTextStreamResponse' in result) {
+      return (result as any).toTextStreamResponse();
     }
 
-    return NextResponse.json({ text: result }) as Response;
+    if (typeof result === 'string') {
+      return NextResponse.json({ text: result });
+    }
+
+    return NextResponse.json({ error: 'Invalid response' }, { status: 500 });
   } catch (err: any) {
     console.error("[AI Route Error]:", err.message);
     return NextResponse.json({ error: err.message }, { status: 500 });
