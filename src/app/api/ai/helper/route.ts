@@ -19,7 +19,12 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ text: response });
     }
 
-    return response;
+    // Convert StreamTextResult to Response
+    if ('toTextStreamResponse' in response) {
+      return response.toTextStreamResponse();
+    }
+
+    return response as any;
   } catch (err: any) {
     console.error("AI Helper Route Error:", err.message);
     return NextResponse.json({ error: err.message }, { status: 500 });

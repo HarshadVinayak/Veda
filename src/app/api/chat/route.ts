@@ -94,7 +94,7 @@ export async function POST(req: Request) {
           }
         });
 
-        return result.toTextStreamResponse();
+        return result.toTextStreamResponse() as Response;
       } catch (err: any) {
         console.warn(`[Chat Waterfall] Provider ${key} failed, falling back...`, err.message);
         continue;

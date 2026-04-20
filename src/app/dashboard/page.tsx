@@ -2,6 +2,7 @@
 
 import React, { useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useUser } from "@/hooks/useUser";
 import UserButton from "@/components/UserButton";
 import { motion, AnimatePresence } from "framer-motion";
@@ -52,6 +53,7 @@ const itemVariants = {
 export default function DashboardPage() {
   const { profile, loading } = useUser();
   const [showSubModal, setShowSubModal] = useState(false);
+  const router = useRouter();
 
   // Mock data for demo (fetched from supabase in real world)
   const [savedBooks] = useState<BookRecord[]>([
@@ -68,7 +70,15 @@ export default function DashboardPage() {
     if (profile?.tier === "FREE_LISTENER") {
       setShowSubModal(true);
     } else {
-      console.log("Action triggered");
+      router.push('/upload');
+    }
+  };
+
+  const handleCameraScan = () => {
+    if (profile?.tier === "FREE_LISTENER") {
+      setShowSubModal(true);
+    } else {
+      router.push('/upload?tab=scan');
     }
   };
 
@@ -132,7 +142,17 @@ export default function DashboardPage() {
           <motion.div
             initial={{ x: 20, opacity: 0 }}
             animate={{ x: 0, opacity: 1 }}
+            className="flex items-center gap-4"
           >
+            {profile?.tier === 'ROOT_USER' && (
+              <button 
+                onClick={() => router.push('/admin')}
+                className="hidden md:flex items-center gap-2 px-4 py-2 bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 rounded-xl text-sm font-bold hover:bg-indigo-500/20 transition-all"
+              >
+                <Zap size={16} />
+                Manage Global Library
+              </button>
+            )}
             {profile && <UserButton user={profile} />}
           </motion.div>
         </div>
@@ -189,7 +209,7 @@ export default function DashboardPage() {
             variants={itemVariants}
             whileHover={{ scale: 1.02, translateY: -5 }}
             whileTap={{ scale: 0.98 }}
-            onClick={handleAction}
+            onClick={handleCameraScan}
             className="group relative h-48 bg-[#18181B] border border-white/5 rounded-[2.5rem] overflow-hidden hover:border-purple-500/50 hover:bg-white/[0.03] transition-all p-10 text-left"
           >
             <div className="absolute top-0 right-0 p-10 opacity-5 group-hover:opacity-10 transition-opacity">

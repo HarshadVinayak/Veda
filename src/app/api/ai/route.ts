@@ -41,11 +41,11 @@ export async function POST(req: NextRequest) {
     const result = await getAiWaterfall(userTier, context || '', prompt);
 
     // If result is from streamText, it will have toTextStreamResponse
-    if (typeof result !== 'string' && 'toTextStreamResponse' in result) {
-      return result.toTextStreamResponse();
+    if (typeof result !== 'string' && 'toTextStreamResponse' in (result as any)) {
+      return (result as any).toTextStreamResponse() as Response;
     }
 
-    return NextResponse.json({ text: result });
+    return NextResponse.json({ text: result }) as Response;
   } catch (err: any) {
     console.error("[AI Route Error]:", err.message);
     return NextResponse.json({ error: err.message }, { status: 500 });
