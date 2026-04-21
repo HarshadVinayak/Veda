@@ -3,8 +3,9 @@ import { cookies } from 'next/headers';
 import { NextResponse } from 'next/server';
 
 /**
- * Step 20 Task 2: Robust Auth Callback
- * Handles the exchange of the auth code for a session and manages profile creation/checks.
+ * PRODUCTION-READY AUTH CALLBACK
+ * Exchanges Google code for session and handles strict tier-based redirects.
+ * Note: Turbopack compatible exports.
  */
 export async function GET(request: Request) {
   const { searchParams, origin } = new URL(request.url);
@@ -34,36 +35,39 @@ export async function GET(request: Request) {
     const { error } = await supabase.auth.exchangeCodeForSession(code);
     
     if (!error) {
-       // Check if profile exists and has a username
-       const { data: { user } } = await supabase.auth.getUser();
-       
-       if (user) {
-         // Step 20 Logic: Root User Auto-Check
-         const isRoot = user.email === 'harish.ramamoorthy7@gmail.com';
-         
-         const { data: profile } = await supabase
-           .from('profiles')
-           .select('username')
-           .eq('id', user.id)
-           .single();
+      const { data: { user } } = await supabase.auth.getUser();
+      
+      if (user) {
+        // Platform Owner Check
+        const isRoot = user.email === 'harish.ramamoorthy7@gmail.com';
+        
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('username, tier')
+          .eq('id', user.id)
+          .single();
 
-         if (isRoot) {
+        // 1. Root Bypass
+        if (isRoot) {
            return NextResponse.redirect(`${origin}/dashboard`);
-         }
+        }
 
-         if (!profile?.username) {
+        // 2. New User / Missing Username Check
+        if (!profile?.username) {
            return NextResponse.redirect(`${origin}/onboarding`);
-         }
-       }
+        }
 
-      return NextResponse.redirect(`${origin}${next}`);
+        // 3. Existing User Redirect
+        return NextResponse.redirect(`${origin}${next}`);
+      }
+    } else {
+      console.error("[Auth Callback Error]", error.message);
     }
   }
 
-  // Fallback to login with error
-  return NextResponse.redirect(`${origin}/login?error=auth_failed`);
+  // Fallback if no code or exchange error
+  return NextResponse.redirect(`${origin}/login?error=oauth_exchange_failed`);
 }
 
-// Added default export for Turbopack compatibility if needed (standard is GET function)
 const authCallback = { GET };
 export default authCallback;

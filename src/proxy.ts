@@ -54,10 +54,15 @@ export default async function proxy(request: NextRequest) {
     }
   );
 
-  const { data: { user } } = await supabase.auth.getUser();
+  const { data: { user }, error: userError } = await supabase.auth.getUser();
+
+  if (userError) {
+    console.warn("[Proxy] Auth check warning:", userError.message);
+  }
 
   // If logged in, check if user has a username
   if (user) {
+    console.log("[Proxy] Session active for:", user.email);
     // Step 20: Root User Bypass
     const isRoot = user.email === 'harish.ramamoorthy7@gmail.com';
     const isOnboarding = request.nextUrl.pathname.startsWith("/onboarding");
@@ -67,13 +72,18 @@ export default async function proxy(request: NextRequest) {
       return response;
     }
 
-    const { data: profile } = await supabase
+    const { data: profile, error: profileError } = await supabase
       .from("profiles")
       .select("username")
       .eq("id", user.id)
       .single();
 
+    if (profileError) {
+      console.warn("[Proxy] Profile fetch error (Expected for new users):", profileError.message);
+    }
+
     const isMissingUsername = !profile?.username;
+    console.log("[Proxy] Status - Is Missing Username:", isMissingUsername);
 
     // 1. Redirect to onboarding if username is missing
     if (isMissingUsername && !isOnboarding && request.nextUrl.pathname !== "/login") {

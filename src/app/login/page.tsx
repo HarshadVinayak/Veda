@@ -13,26 +13,43 @@ export default function LoginPage() {
 
   // Handle OAuth session on component mount or redirect back
   useEffect(() => {
-    const handleAuthChange = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
+    const checkSession = async () => {
+      const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+      
+      if (sessionError) {
+        console.error("Session fetch error:", sessionError);
+        setError(sessionError.message);
+        return;
+      }
+
       if (session) {
         setLoading(true);
-        // Check if profile exists
-        const { data: profile, error: profileError } = await supabase
-          .from("profiles")
-          .select("username")
-          .eq("id", session.user.id)
-          .single();
+        try {
+          // Verify user data
+          const { data: profile, error: profileError } = await supabase
+            .from("profiles")
+            .select("username")
+            .eq("id", session.user.id)
+            .single();
 
-        if (profileError || !profile?.username) {
-          router.push("/onboarding");
-        } else {
-          router.push("/dashboard");
+          if (profileError && profileError.code !== 'PGRST116') {
+             throw profileError;
+          }
+
+          if (!profile?.username) {
+            router.push("/onboarding");
+          } else {
+            router.push("/dashboard");
+          }
+        } catch (err: any) {
+          console.error("Profile check error:", err);
+          setError("Session found but profile check failed. Try again.");
+          setLoading(false);
         }
       }
     };
 
-    handleAuthChange();
+    checkSession();
   }, [router]);
 
   const handleGoogleLogin = async () => {
