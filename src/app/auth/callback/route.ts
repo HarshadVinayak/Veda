@@ -42,9 +42,6 @@ export async function GET(request: Request) {
     }
   }
 
-  // Fallback
-  return NextResponse.redirect(`${origin}/login?error=no_auth_code`);
+  // Fallback if no code or exchange error
+  return NextResponse.redirect(`${origin}/login?error=${encodeURIComponent("no_auth_code")}`);
 }
-
-const authCallback = { GET };
-export default authCallback;
