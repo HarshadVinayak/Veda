@@ -90,11 +90,22 @@ export default function BetterReader({ bookId, pages }: { bookId: string; pages:
             </button>
           </div>
           
-          {(studyMode || tier === 'STUDENT') && (
-            <button onClick={() => setStudyOpen(true)} className="flex items-center gap-2 bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 px-4 py-2 rounded-xl text-sm font-semibold">
+          {(tier === 'STUDENT' || tier === 'ROOT_USER') && (
+            <button onClick={() => setStudyOpen(true)} className="flex items-center gap-2 bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 px-4 py-2 rounded-xl text-sm font-semibold hover:bg-emerald-500/20 transition-all">
               <Brain size={18} /> <span className="hidden sm:inline">Study Helper</span>
             </button>
           )}
+
+          <button 
+            className="flex items-center gap-2 bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 px-4 py-2 rounded-xl text-sm font-semibold hover:bg-indigo-500/20 transition-all"
+            onClick={() => {
+              // Basic search trigger for everyone
+              const query = prompt("What would you like to search in this book?");
+              if (query) alert(`AI Search: Finding "${query}"... [Free Feature]`);
+            }}
+          >
+            <Globe size={18} /> <span className="hidden sm:inline">AI Search</span>
+          </button>
         </div>
       </div>
 
@@ -108,8 +119,17 @@ export default function BetterReader({ bookId, pages }: { bookId: string; pages:
               <Highlighter size={14} /> Highlight
             </button>
             <div className="w-px h-6 bg-white/10" />
-            <button className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-indigo-400 hover:bg-indigo-400/10 rounded-lg">
-              <MessageSquareText size={14} /> Ask AI
+            <button 
+              className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-indigo-400 hover:bg-indigo-400/10 rounded-lg"
+              onClick={() => {
+                if (tier === 'FREE_LISTENER') {
+                  alert("AI Search: Scanning book for selected context...");
+                } else {
+                  alert("Opening Chat Assistant...");
+                }
+              }}
+            >
+              <MessageSquareText size={14} /> {tier === 'FREE_LISTENER' ? 'Search This' : 'Chat Assistant'}
             </button>
             <div className="w-px h-6 bg-white/10" />
             <button 
@@ -153,7 +173,9 @@ export default function BetterReader({ bookId, pages }: { bookId: string; pages:
       </div>
 
       <StudySidebar isOpen={studyOpen} onClose={() => setStudyOpen(false)} contextText={selectedText || pages[currentPage]} />
-      <ChatSidebar bookId={bookId} bookTitle={activeBook?.title || 'Current Book'} />
+      {(tier === 'ADULT' || tier === 'ROOT_USER') && (
+        <ChatSidebar bookId={bookId} bookTitle={activeBook?.title || 'Current Book'} />
+      )}
     </div>
   );
 }

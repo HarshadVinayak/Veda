@@ -41,15 +41,21 @@ export const PROVIDERS = {
 } as const;
 
 const SYSTEM_PROMPTS: Record<UserTier, string> = {
-  FREE_LISTENER: 'You are a helpful reading assistant. Be concise.',
-  STUDENT: 'You are a PhD Tutor for students. Provide expert step-by-step academic solutions using the specific curriculum terminology of the provided book.',
-  ADULT: 'You are a professional editor and literary analyst. Provide deep structural insights, character analysis, and comprehensive summaries.',
-  ROOT_USER: 'You are the Veda System Architect. Full override enabled. Provide maximum tactical intelligence.',
+  FREE_LISTENER: 'You are the Veda AI Search Engine. Your primary role is to help users find information within books and provide brief, accurate summaries of search results. You do not engage in deep conversations or study help.',
+  STUDENT: 'You are the Veda AI Study Helper. You are a PhD-level academic tutor. Your role is to solve sums, explain complex concepts from textbooks, and provide step-by-step logic for students.',
+  ADULT: 'You are the Veda AI Chatbot Assistant. You are a versatile conversational agent. You can discuss literature, provide deep insights, and act as a personal literary consultant.',
+  ROOT_USER: 'You are the Veda Omnipotent System Architect. Full feature access enabled. You provide the highest level of detail across search, study help, and chatting.',
 };
 
-export async function getAiWaterfall(tier: UserTier, context: string, query: string, stream = true) {
+export async function getAiWaterfall(tier: UserTier, context: string, query: string, stream = true, history: any[] = []) {
   const systemPrompt = SYSTEM_PROMPTS[tier] || SYSTEM_PROMPTS.FREE_LISTENER;
-  const fullPrompt = `${context ? `Context: ${context}\n\n` : ''}User Query: ${query}`;
+  
+  // Format messages for Chat
+  const messages = [
+    { role: 'system', content: `${systemPrompt}${context ? `\n\nContext from book:\n${context.slice(-2000)}` : ''}` },
+    ...history,
+    { role: 'user', content: query }
+  ];
 
   const providerOrder: (keyof typeof PROVIDERS)[] = [
     'cerebras', 
@@ -74,15 +80,13 @@ export async function getAiWaterfall(tier: UserTier, context: string, query: str
       if (stream) {
         return streamText({
           model,
-          system: systemPrompt,
-          prompt: fullPrompt,
+          messages: messages as any,
         });
       }
 
       const { text } = await generateText({
         model,
-        system: systemPrompt,
-        prompt: fullPrompt,
+        messages: messages as any,
       });
 
       if (!text) throw new Error("Empty response");
@@ -94,7 +98,7 @@ export async function getAiWaterfall(tier: UserTier, context: string, query: str
     }
   }
 
-  throw new Error("Critical: All AI Providers failed. Please check internet connection.");
+  throw new Error("Critical: All AI Providers failed.");
 }
 
 const orchestrator = { getAiWaterfall, PROVIDERS };
