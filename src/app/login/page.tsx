@@ -49,7 +49,9 @@ export default function LoginPage() {
       }
     };
 
-    checkSession();
+    // Small delay to let Supabase client process the URL hash
+    const timeout = setTimeout(checkSession, 500);
+    return () => clearTimeout(timeout);
   }, [router]);
 
   const handleGoogleLogin = async () => {

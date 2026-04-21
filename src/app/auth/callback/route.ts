@@ -3,9 +3,9 @@ import { cookies } from 'next/headers';
 import { NextResponse } from 'next/server';
 
 /**
- * PRODUCTION-READY AUTH CALLBACK
- * Exchanges Google code for session and handles strict tier-based redirects.
- * Note: Turbopack compatible exports.
+ * FAIL-SAFE AUTH CALLBACK
+ * Only handles the code exchange. 
+ * The Proxy (middleware) handles all tier-based redirection.
  */
 export async function GET(request: Request) {
   const { searchParams, origin } = new URL(request.url);
@@ -32,41 +32,18 @@ export async function GET(request: Request) {
       }
     );
 
-    const { error } = await supabase.auth.exchangeCodeForSession(code);
+    const { error: exchangeError } = await supabase.auth.exchangeCodeForSession(code);
     
-    if (!error) {
-      const { data: { user } } = await supabase.auth.getUser();
-      
-      if (user) {
-        // Platform Owner Check
-        const isRoot = user.email === 'harish.ramamoorthy7@gmail.com';
-        
-        const { data: profile } = await supabase
-          .from('profiles')
-          .select('username, tier')
-          .eq('id', user.id)
-          .single();
-
-        // 1. Root Bypass
-        if (isRoot) {
-           return NextResponse.redirect(`${origin}/dashboard`);
-        }
-
-        // 2. New User / Missing Username Check
-        if (!profile?.username) {
-           return NextResponse.redirect(`${origin}/onboarding`);
-        }
-
-        // 3. Existing User Redirect
-        return NextResponse.redirect(`${origin}${next}`);
-      }
+    if (!exchangeError) {
+      return NextResponse.redirect(`${origin}${next}`);
     } else {
-      console.error("[Auth Callback Error]", error.message);
+      console.error("[Auth Callback Error]", exchangeError.message, exchangeError.status);
+      return NextResponse.redirect(`${origin}/login?error=${encodeURIComponent(exchangeError.message)}`);
     }
   }
 
-  // Fallback if no code or exchange error
-  return NextResponse.redirect(`${origin}/login?error=oauth_exchange_failed`);
+  // Fallback
+  return NextResponse.redirect(`${origin}/login?error=no_auth_code`);
 }
 
 const authCallback = { GET };
