@@ -14,5 +14,12 @@ Veda is a high-end educational platform designed to make learning immersive and 
 - **Backend/Auth**: Supabase (PostgreSQL, RLS, Edge Functions).
 - **AI Engine**: AI SDK (Vercel), Cerebras, Groq, Gemini.
 
+## Setup Instructions (New Supabase Project)
+If you are connecting to a new Supabase project (id: `szqlrwwcabexrqnollmf`), you **MUST** run the SQL migration found in `supabase/setup_tiers.sql`.
+
+1. Go to the **SQL Editor** in your Supabase Dashboard.
+2. Paste and run the entire content of `supabase/setup_tiers.sql`.
+3. This will set up the `profiles` table, the `user_tier` enum, and the **Root User** auto-assignment trigger.
+
 ---
 © 2026 Veda. Built for excellence.
