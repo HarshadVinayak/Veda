@@ -1,21 +1,18 @@
-import { createClient } from "@supabase/supabase-js";
+import { createBrowserClient } from "@supabase/ssr";
 import { Database } from "@/types/database";
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
 
 /**
- * Standard Client-side Supabase instance.
- * Exported as default for Turbopack compatibility.
+ * PRODUCTION-READY Browser Client
+ * Uses @supabase/ssr to ensure PKCE code verifiers are stored in cookies.
+ * This prevents the "PKCE code verifier not found" error during the OAuth callback.
  */
-export const supabase = createClient<Database>(supabaseUrl, supabaseAnonKey, {
-  auth: {
-    persistSession: true,
-    autoRefreshToken: true,
-    detectSessionInUrl: true,
-    flowType: 'pkce'
-  }
-});
+export const supabase = createBrowserClient<Database>(
+  supabaseUrl,
+  supabaseAnonKey
+);
 
 /**
  * Root User Check Utility
